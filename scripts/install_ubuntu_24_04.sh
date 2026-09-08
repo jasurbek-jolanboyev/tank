@@ -18,6 +18,9 @@ sudo apt-get install -y python3-venv python3-dev build-essential libgl1 libglib2
 if ! id -u tank >/dev/null 2>&1; then
   sudo useradd --system --user-group --home-dir /var/lib/tank --shell /usr/sbin/nologin tank
 fi
+# USB/V4L2 cameras normally belong to `video`; USB serial adapters normally
+# belong to `dialout`.  The service needs these groups for real hardware.
+sudo usermod -aG video,dialout tank
 
 sudo install -d -o tank -g tank -m 0750 \
   /etc/tank /var/lib/tank /var/lib/tank/recordings /var/log/tank
