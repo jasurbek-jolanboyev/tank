@@ -15,7 +15,7 @@ class VisionDashboard extends StatefulWidget {
 class _VisionDashboardState extends State<VisionDashboard> {
   static const serverHost = String.fromEnvironment(
     'TANK_SERVER_HOST',
-    defaultValue: '127.0.0.1',
+    defaultValue: '172.16.246.172',
   );
   ControlMode mode = ControlMode.auto;
   int cameraCount = 1;
