@@ -28,7 +28,10 @@ class OpenCvCamera:
                       "! nvvidconv ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=BGR ! appsink drop=1")
             backend = cv2.CAP_GSTREAMER
         elif config["type"] in {"usb", "webcam"}:
-            source = int(source)
+            # Accept both a numeric OpenCV index (e.g. 0) and a stable Linux
+            # device path such as /dev/v4l/by-id/... .
+            if isinstance(source, str) and source.strip().isdigit():
+                source = int(source.strip())
         self.capture = cv2.VideoCapture(source, backend)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["width"])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, config["height"])
