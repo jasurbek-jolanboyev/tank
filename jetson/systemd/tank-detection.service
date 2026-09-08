@@ -1,0 +1,23 @@
+[Unit]
+Description=Tank passive detection central server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tank
+Group=tank
+WorkingDirectory=/opt/tank/jetson
+EnvironmentFile=-/etc/tank/tank.env
+ExecStart=/opt/tank/jetson/.venv-ubuntu/bin/python -m app.main --config /etc/tank/config.yaml
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tank /var/log/tank
+
+[Install]
+WantedBy=multi-user.target

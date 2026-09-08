@@ -1,0 +1,19 @@
+[Unit]
+Description=Tank passive detection central service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tank
+Group=tank
+WorkingDirectory=/opt/tank/jetson
+Environment=PYTHONPATH=/opt/tank/jetson
+ExecStart=/opt/tank/jetson/.venv/bin/python -m app.main --config /opt/tank/jetson/configs/production.yaml
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

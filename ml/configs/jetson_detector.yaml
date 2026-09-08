@@ -1,0 +1,13 @@
+seed: 20260820
+architecture: yolo11n
+inputSize: 640
+epochs: 100
+batch: 16
+classes: [drone, bird, aircraft]
+datasetConfig: dataset_jetson.yaml
+output: ../models/detector
+export:
+  onnxOpset: 17
+  dynamicBatch: false
+  simplify: true
+  tensorrtPrecision: fp16

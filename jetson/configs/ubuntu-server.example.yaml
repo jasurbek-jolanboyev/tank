@@ -1,0 +1,45 @@
+# Copy target: /etc/tank/config.yaml
+#
+# One USB camera baseline for the first server acceptance test.  Change `source`
+# to the stable /dev/v4l/by-id/... path reported by v4l2-ctl --list-devices.
+# Add the remaining cameras only after this one produces a JPEG preview.
+version: 1
+mode: UBUNTU_VM_REAL
+rest: {host: "${TANK_SERVER_HOST}", port: 8080}
+websocket: {port: 8081}
+ai:
+  type: onnx
+  model: "${TANK_MODEL_PATH}"
+  format: yolo_v8
+  classes: [drone, bird, aircraft, unknown_air_object]
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+range: {source: esp32}
+recording:
+  enabled: true
+  directory: /var/lib/tank/recordings
+  maxBytes: 104857600
+  backupCount: 5
+cameras:
+  - id: CAM_FRONT_1
+    enabled: true
+    type: usb
+    source: "${TANK_CAM_FRONT_1_SOURCE}"
+    sector: FRONT_1
+    width: 1280
+    height: 720
+    captureFps: 15
+    aiFps: 5
+    previewFps: 5
+    rotation: 0
+    flip: false
+esp32Nodes: []

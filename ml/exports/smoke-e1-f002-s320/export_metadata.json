@@ -1,0 +1,6 @@
+{
+  "sourceCheckpoint": "ml/models/detector/train-e1-f0.02-s320/weights/best.pt",
+  "onnx": "ml/exports/smoke-e1-f002-s320/best.onnx",
+  "sha256": "501602f444ae7cc97062dba9aa59518c747c19fe847f2bf773760620148caede",
+  "tensorrtStatus": "NOT BUILT \u2014 JETSON REQUIRED"
+}

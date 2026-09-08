@@ -1,0 +1,43 @@
+version: 1
+mode: SIMULATOR
+rest:
+  host: 127.0.0.1
+  port: 8080
+websocket:
+  port: 8081
+ai: {type: mock}
+range: {source: mock}
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+recording:
+  enabled: true
+  directory: recordings
+  maxBytes: 10485760
+  backupCount: 3
+cameras:
+  - id: CAM_FRONT_1
+    enabled: true
+    type: simulated
+    source: simulator
+    sector: FRONT_1
+    width: 640
+    height: 360
+    captureFps: 10
+    aiFps: 5
+    previewFps: 5
+    rotation: 0
+    flip: false
+esp32Nodes:
+  - nodeId: NODE-FRONT-01
+    sector: FRONT_1
+    transport: mock
+    endpoint: mock://front-1

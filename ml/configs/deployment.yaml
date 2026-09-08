@@ -1,0 +1,7 @@
+target: esp32s3
+quantization: int8
+format: espdl
+model_id: tank-air-detector
+model_version: 0.1.0-dev
+maximum_accuracy_drop: 0.05
+

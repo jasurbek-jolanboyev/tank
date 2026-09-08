@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tank://protocol/v1",
+  "title": "Tank passive detection protocol v1",
+  "type": "object",
+  "required": ["protocolVersion", "type", "timestamp"],
+  "properties": {
+    "protocolVersion": {"const": 1},
+    "type": {"enum": ["range", "node_health", "indicator_state", "vision_detection", "sector_state", "camera_health", "system_health", "event", "heartbeat"]},
+    "timestamp": {"type": "integer", "minimum": 0},
+    "nodeId": {"type": "string"},
+    "sensorId": {"type": "string"},
+    "sector": {"enum": ["TOP_1", "TOP_2", "TOP_3", "FRONT_1", "FRONT_2", "REAR_1", "REAR_2", "LEFT_1", "LEFT_2", "RIGHT_1", "RIGHT_2"]}
+  },
+  "additionalProperties": true
+}

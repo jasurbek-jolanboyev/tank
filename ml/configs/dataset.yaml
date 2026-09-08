@@ -1,0 +1,9 @@
+classes: [drone, bird, aircraft, unknown_air_object]
+names:
+  0: drone
+  1: bird
+  2: aircraft
+  3: unknown_air_object
+train: ../datasets/train
+val: ../datasets/validation
+test: ../datasets/test

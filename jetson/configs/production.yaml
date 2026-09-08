@@ -1,0 +1,24 @@
+version: 1
+mode: JETSON_FUTURE
+rest: {host: 0.0.0.0, port: 8080}
+websocket: {port: 8081}
+ai: {type: tensorrt, engine: /opt/tank/jetson/models/detector.engine}
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+recording: {enabled: true, directory: /var/lib/tank/recordings, maxBytes: 104857600, backupCount: 5}
+cameras:
+  - {id: CAM_FRONT_1, enabled: true, type: csi, source: 0, sector: FRONT_1,
+     width: 1280, height: 720, captureFps: 30, aiFps: 15, previewFps: 10,
+     rotation: 0, flip: false}
+esp32Nodes:
+  - {nodeId: NODE-FRONT-01, sector: FRONT_1, transport: serial,
+     endpoint: /dev/ttyACM0, baudRate: 115200}

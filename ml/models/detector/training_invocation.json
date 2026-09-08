@@ -1,0 +1,27 @@
+{
+  "config": {
+    "seed": 20260820,
+    "architecture": "yolo11n",
+    "inputSize": 640,
+    "epochs": 100,
+    "batch": 16,
+    "classes": [
+      "drone",
+      "bird",
+      "aircraft"
+    ],
+    "datasetConfig": "dataset_jetson.yaml",
+    "output": "../models/detector",
+    "export": {
+      "onnxOpset": 17,
+      "dynamicBatch": false,
+      "simplify": true,
+      "tensorrtPrecision": "fp16"
+    }
+  },
+  "effectiveEpochs": 1,
+  "effectiveBatch": 8,
+  "effectiveFraction": 0.02,
+  "effectiveInputSize": 320,
+  "resultDirectory": "/Users/jasurbek/tank/ml/models/detector/train-e1-f0.02-s320"
+}

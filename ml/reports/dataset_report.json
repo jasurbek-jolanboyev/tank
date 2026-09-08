@@ -1,0 +1,19 @@
+{
+  "status": "OK",
+  "images": 6023,
+  "labels": 6023,
+  "corrupt": [],
+  "duplicates": [],
+  "missing_labels": [],
+  "invalid_boxes": [],
+  "leakage": [],
+  "class_counts": {
+    "2": 3109,
+    "1": 1039,
+    "0": 1540
+  },
+  "resolutions": {
+    "640x512": 6023
+  },
+  "tiny_objects": 0
+}
