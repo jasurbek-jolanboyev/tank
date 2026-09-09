@@ -12,6 +12,9 @@ inline constexpr std::size_t kKeyCount = 4;
 struct KeyConfig { const char* keyId; const char* sector; const char* rangeSensorId;
   uint8_t rangeI2cAddress; gpio_num_t whiteGpio; gpio_num_t redGpio; };
 // UNVERIFIED BOARD PROFILE: verify every GPIO against the exact ESP32-S3 board.
+// These pins drive only the input of a 3.3-V-compatible MOSFET/relay driver.
+// They must never be connected to a 24-V rail or to a lamp directly.
+inline constexpr bool kIndicatorActiveHigh = true;
 #if TANK_NODE_PROFILE == 1
 inline constexpr char kNodeId[] = "NODE-01";
 inline constexpr std::array<KeyConfig, kKeyCount> kKeys{{

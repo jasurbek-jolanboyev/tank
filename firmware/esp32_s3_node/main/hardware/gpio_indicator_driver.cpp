@@ -2,6 +2,8 @@
 
 namespace tank {
 bool GpioIndicatorDriver::begin() {
+  // GPIO is a logic-level control signal. External 24-V loads require an
+  // isolated or logic-level MOSFET/relay driver and their own fused supply.
   gpio_config_t config{};
   config.pin_bit_mask = (1ULL << white_) | (1ULL << red_);
   config.mode = GPIO_MODE_OUTPUT;

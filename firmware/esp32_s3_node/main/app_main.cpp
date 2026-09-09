@@ -57,10 +57,10 @@ extern "C" void app_main() {
   }};
 
   std::array<GpioIndicatorDriver, kKeyCount> indicators{{
-    {kKeys[0].whiteGpio, kKeys[0].redGpio},
-    {kKeys[1].whiteGpio, kKeys[1].redGpio},
-    {kKeys[2].whiteGpio, kKeys[2].redGpio},
-    {kKeys[3].whiteGpio, kKeys[3].redGpio}
+    {kKeys[0].whiteGpio, kKeys[0].redGpio, kIndicatorActiveHigh},
+    {kKeys[1].whiteGpio, kKeys[1].redGpio, kIndicatorActiveHigh},
+    {kKeys[2].whiteGpio, kKeys[2].redGpio, kIndicatorActiveHigh},
+    {kKeys[3].whiteGpio, kKeys[3].redGpio, kIndicatorActiveHigh}
   }};
 
   std::array<DistanceFilter, kKeyCount> filters{};
