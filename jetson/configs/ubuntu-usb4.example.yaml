@@ -18,6 +18,11 @@ policy:
   trackTimeoutMs: 2000
   nearEnterMeters: 20.0
   nearExitMeters: 22.0
+  nearEnterSamples: 3
+  nearExitSamples: 3
+  distanceFilterWindow: 5
+  distanceFilterAlpha: 0.35
+  distanceOutlierMeters: 8.0
   requireApproachingForRed: false
   maximumRangeAgeMs: 500
 range: {source: esp32}

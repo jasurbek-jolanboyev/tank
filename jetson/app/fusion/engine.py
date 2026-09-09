@@ -10,10 +10,19 @@ class SensorFusionEngine:
         self.ranges: dict[str, RangeMeasurement] = {}
         self.filters: dict[str, DistanceFilter] = {}
         self.near: dict[str, bool] = {}
+        self.near_enter_samples: dict[str, int] = {}
+        self.near_exit_samples: dict[str, int] = {}
 
     def observe_range(self, measurement: RangeMeasurement) -> None:
         if measurement.valid and measurement.distance_meters is not None:
-            value = self.filters.setdefault(measurement.sector, DistanceFilter()).update(measurement.distance_meters)
+            value = self.filters.setdefault(
+                measurement.sector,
+                DistanceFilter(
+                    window=int(self.policy.get("distanceFilterWindow", 1)),
+                    alpha=float(self.policy.get("distanceFilterAlpha", 1.0)),
+                    outlier_m=float(self.policy.get("distanceOutlierMeters", 15.0)),
+                ),
+            ).update(measurement.distance_meters)
             measurement.distance_meters = value
         self.ranges[measurement.sector] = measurement
 
@@ -31,13 +40,28 @@ class SensorFusionEngine:
             self.near[track.sector] = False
             return track
         is_near = self.near.get(track.sector, False)
+        enter_samples = max(1, int(self.policy.get("nearEnterSamples", 1)))
+        exit_samples = max(1, int(self.policy.get("nearExitSamples", 1)))
         if track.distance_meters is not None:
             if not is_near and track.distance_meters <= self.policy["nearEnterMeters"]:
-                is_near = True
+                self.near_enter_samples[track.sector] = self.near_enter_samples.get(track.sector, 0) + 1
+                self.near_exit_samples[track.sector] = 0
+                if self.near_enter_samples[track.sector] >= enter_samples:
+                    is_near = True
+                    self.near_enter_samples[track.sector] = 0
             elif is_near and track.distance_meters >= self.policy["nearExitMeters"]:
-                is_near = False
+                self.near_exit_samples[track.sector] = self.near_exit_samples.get(track.sector, 0) + 1
+                self.near_enter_samples[track.sector] = 0
+                if self.near_exit_samples[track.sector] >= exit_samples:
+                    is_near = False
+                    self.near_exit_samples[track.sector] = 0
+            else:
+                self.near_enter_samples[track.sector] = 0
+                self.near_exit_samples[track.sector] = 0
         else:
             is_near = False
+            self.near_enter_samples[track.sector] = 0
+            self.near_exit_samples[track.sector] = 0
         self.near[track.sector] = is_near
         red = is_near and (not self.policy["requireApproachingForRed"] or track.approaching)
         track.indicator = IndicatorState.RED if red else IndicatorState.WHITE
