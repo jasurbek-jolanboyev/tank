@@ -1,0 +1,31 @@
+# Four USB cameras on one powered USB 3 hub. Copy to /etc/tank/config.yaml
+# after verifying that VMware passes all four devices into Ubuntu.
+version: 1
+mode: UBUNTU_VM_REAL
+rest: {host: "${TANK_SERVER_HOST}", port: 8080}
+websocket: {port: 8081}
+ai:
+  type: onnx
+  model: "${TANK_MODEL_PATH}"
+  format: yolo_v8
+  classes: [drone, bird, aircraft, unknown_air_object]
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+range: {source: esp32}
+recording: {enabled: true, directory: /var/lib/tank/recordings, maxBytes: 104857600, backupCount: 5}
+cameras:
+  - {id: CAM_FRONT_1, enabled: true, type: usb, source: auto, sector: FRONT_1, width: 640, height: 480, captureFps: 10, aiFps: 3, previewFps: 5, rotation: 0, flip: false}
+  - {id: CAM_FRONT_2, enabled: true, type: usb, source: auto, sector: FRONT_2, width: 640, height: 480, captureFps: 10, aiFps: 3, previewFps: 5, rotation: 0, flip: false}
+  - {id: CAM_RIGHT_1, enabled: true, type: usb, source: auto, sector: RIGHT_1, width: 640, height: 480, captureFps: 10, aiFps: 3, previewFps: 5, rotation: 0, flip: false}
+  - {id: CAM_RIGHT_2, enabled: true, type: usb, source: auto, sector: RIGHT_2, width: 640, height: 480, captureFps: 10, aiFps: 3, previewFps: 5, rotation: 0, flip: false}
+esp32Nodes:
+  - {nodeId: NODE-01, sectors: [FRONT_1, FRONT_2, RIGHT_1, RIGHT_2], transport: serial, endpoint: auto, baudRate: 115200}
