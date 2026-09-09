@@ -6,12 +6,13 @@ idf_component_register(
     "ranging/tf02_pro.cpp"
     "ranging/tf02_pro_i2c.cpp"
     "transport/json_serial_transport.cpp"
+    "network/wifi_ap_bridge.cpp"
     "core/src/sector.cpp"
     "core/src/temporal_validator.cpp"
     "core/src/indicator_manager.cpp"
     "core/src/tf02_frame_parser.cpp"
   INCLUDE_DIRS "." "core/include"
-  REQUIRES driver esp_timer esp_system json nvs_flash
+  REQUIRES driver esp_timer esp_system json nvs_flash esp_wifi esp_netif esp_event esp_http_server
 )
 if(DEFINED ENV{TANK_NODE_PROFILE})
   set(TANK_NODE_PROFILE_VALUE $ENV{TANK_NODE_PROFILE})

@@ -27,6 +27,12 @@ Erase/reconfigure the build directory when changing profiles so a binary is neve
 flashed to the wrong node. The build log prints node/profile/key count at boot.
 The GPIO map is an **UNVERIFIED BOARD PROFILE** until the exact board is selected.
 
+At boot the node also creates the WPA2 SoftAP `TANK-SECURE-NET` (password
+`Tank12345678`, AP IP `192.168.4.1`). `GET /health` and `/telemetry` are
+read-only diagnostics. Camera capture and AI stay on Ubuntu; the node receives
+JSON indicator commands over serial and forces each owned sector OFF after 2 s
+without a valid command.
+
 Before joining four TF02-Pro units on one bus, configure and save unique I2C
 addresses 0x10, 0x11, 0x12 and 0x13 one sensor at a time. External 3.3-V I2C
 pull-ups are required and must be sized for the physical bus. Current firmware

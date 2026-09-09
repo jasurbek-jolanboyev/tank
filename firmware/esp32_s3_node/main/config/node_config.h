@@ -38,4 +38,6 @@ inline constexpr uart_port_t kUbuntuUart=UART_NUM_2;
 inline constexpr gpio_num_t kUbuntuRx=GPIO_NUM_16, kUbuntuTx=GPIO_NUM_15;
 inline constexpr int kUbuntuBaud=115200;
 inline constexpr uint32_t kUbuntuTimeoutMs=2000;
+inline constexpr char kApSsid[]="TANK-SECURE-NET";
+inline constexpr char kApPassword[]="Tank12345678";
 }  // namespace tank::node_config

@@ -4,6 +4,7 @@
 #include "cJSON.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "network/wifi_ap_bridge.h"
 
 namespace tank {
 namespace { const char* TAG = "protocol"; JsonSerialTransport* output{}; }
@@ -17,6 +18,7 @@ bool JsonSerialTransport::begin() {
          uart_set_pin(uart_, tx_, rx_, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) == ESP_OK;
 }
 void JsonSerialTransport::write(const char* message) {
+  tank_wifi_publish(message);
   uart_write_bytes(uart_, message, std::strlen(message));
   uart_write_bytes(uart_, "\n", 1);
 }
@@ -29,19 +31,30 @@ bool JsonSerialTransport::pollIndicator(IndicatorCommand& command) {
       const cJSON* version = cJSON_GetObjectItem(root, "protocolVersion");
       const cJSON* type = cJSON_GetObjectItem(root, "type");
       const cJSON* sector = cJSON_GetObjectItem(root, "sector");
+      const cJSON* color = cJSON_GetObjectItem(root, "color");
       const cJSON* white = cJSON_GetObjectItem(root, "white"); const cJSON* red = cJSON_GetObjectItem(root, "red");
       const cJSON* requestedState = cJSON_GetObjectItem(root, "state");
       const cJSON* track = cJSON_GetObjectItem(root, "trackId");
-      const bool valid = cJSON_IsNumber(version) && version->valueint == 1 &&
-          cJSON_IsString(type) && std::strcmp(type->valuestring, "indicator_state") == 0 &&
+      const bool commandType = cJSON_IsString(type) &&
+          (std::strcmp(type->valuestring, "indicator_state") == 0 ||
+           std::strcmp(type->valuestring, "indicator_cmd") == 0);
+      const bool stringState = cJSON_IsString(requestedState) &&
+          (std::strcmp(requestedState->valuestring,"OFF")==0 ||
+           std::strcmp(requestedState->valuestring,"WHITE")==0 ||
+           std::strcmp(requestedState->valuestring,"RED")==0);
+      const bool stringColor = cJSON_IsString(color) &&
+          (std::strcmp(color->valuestring,"OFF")==0 ||
+           std::strcmp(color->valuestring,"WHITE")==0 ||
+           std::strcmp(color->valuestring,"RED")==0);
+      const bool valid = cJSON_IsNumber(version) && version->valueint == 1 && commandType &&
           cJSON_IsString(sector) && std::strlen(sector->valuestring) < sizeof(command.sector) &&
-          ((cJSON_IsString(requestedState) &&
-            (std::strcmp(requestedState->valuestring,"OFF")==0 || std::strcmp(requestedState->valuestring,"WHITE")==0 || std::strcmp(requestedState->valuestring,"RED")==0)) ||
+          ((stringState || stringColor) ||
            (cJSON_IsBool(white) && cJSON_IsBool(red) && !(cJSON_IsTrue(white) && cJSON_IsTrue(red))));
       if (valid) {
         std::strncpy(command.sector,sector->valuestring,sizeof(command.sector)-1);
-        command.state = cJSON_IsString(requestedState) ?
-          (std::strcmp(requestedState->valuestring,"RED")==0?IndicatorState::Red:std::strcmp(requestedState->valuestring,"WHITE")==0?IndicatorState::White:IndicatorState::Off) :
+        const cJSON* state = stringState ? requestedState : color;
+        command.state = (state != nullptr) ?
+          (std::strcmp(state->valuestring,"RED")==0?IndicatorState::Red:std::strcmp(state->valuestring,"WHITE")==0?IndicatorState::White:IndicatorState::Off) :
           (cJSON_IsTrue(red)?IndicatorState::Red:cJSON_IsTrue(white)?IndicatorState::White:IndicatorState::Off);
         command.trackId = cJSON_IsNumber(track) ? static_cast<uint32_t>(track->valuedouble) : 0;
       }
