@@ -1,6 +1,6 @@
-# Direct macOS profile for the current USB topology.  AVFoundation device 1 is
-# the MacBook FaceTime camera and is deliberately omitted.  Devices 0, 2, 3,
-# and 4 are the four external UVC cameras observed on this Mac.
+# Direct macOS profile for the current USB topology. AVFoundation device 0 is
+# the MacBook FaceTime camera and is deliberately omitted. Devices 1–4 are the
+# four external UVC cameras currently observed on this Mac.
 version: 1
 mode: DEVELOPMENT
 rest: {host: "${TANK_SERVER_HOST}", port: 8080}
@@ -31,10 +31,8 @@ policy:
 range: {source: esp32}
 recording: {enabled: true, directory: recordings, maxBytes: 104857600, backupCount: 5}
 cameras:
-  - {id: CAM_FRONT_1, enabled: true, type: avfoundation, source: 0, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
-  # macOS mapped source 2 to the built-in FaceTime view in this topology.
-  # Keep it disabled so an internal camera can never be mistaken for a sector.
-  - {id: CAM_FRONT_2, enabled: false, type: avfoundation, source: 2, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+  - {id: CAM_FRONT_1, enabled: true, type: avfoundation, source: 1, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+  - {id: CAM_FRONT_2, enabled: true, type: avfoundation, source: 2, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
   - {id: CAM_RIGHT_1, enabled: true, type: avfoundation, source: 3, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
   - {id: CAM_RIGHT_2, enabled: true, type: avfoundation, source: 4, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
 esp32Nodes: []
