@@ -23,6 +23,16 @@ TANK_NODE_PROFILE=1 idf.py build   # NODE-01 / KEYS-01..04
 TANK_NODE_PROFILE=2 idf.py build   # NODE-02 / KEYS-05..08
 ```
 
+For a typical **active-low 8-channel relay module**, build after checking one
+relay with a multimeter or small bench lamp:
+
+```bash
+TANK_NODE_PROFILE=1 TANK_INDICATOR_ACTIVE_HIGH=0 idf.py build flash monitor
+```
+
+`TANK_INDICATOR_ACTIVE_HIGH=1` remains the safe default for active-high MOSFET
+drivers. Relay contacts, not an ESP32 pin, switch the 24-V lamp circuit.
+
 Erase/reconfigure the build directory when changing profiles so a binary is never
 flashed to the wrong node. The build log prints node/profile/key count at boot.
 The GPIO map is an **UNVERIFIED BOARD PROFILE** until the exact board is selected.

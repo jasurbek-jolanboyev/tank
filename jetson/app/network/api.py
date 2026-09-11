@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
 from app.engine import DetectionEngine
 
@@ -27,7 +28,7 @@ def create_api(engine: DetectionEngine) -> FastAPI:
 <script>
 const state=document.querySelector('#state'), cams=document.querySelector('#cams'), log=document.querySelector('#log');
 function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-async function refresh(){try{const [h,c]=await Promise.all([fetch('/health'),fetch('/cameras')]);if(!h.ok||!c.ok)throw Error('HTTP '+h.status);const health=await h.json(), data=await c.json();state.className='state ok';state.textContent='Server ishlayapti · rejim '+health.mode+' · detector '+health.detector;cams.innerHTML=Object.entries(data).map(([id,x])=>`<div class='cam'><b>${esc(id)} · ${esc(x.sector)}</b><br><span class='${x.online?'ok':'bad'}'>${x.online?'Ulangan':'Kamera uzilgan'}</span> · FPS ${Number(x.captureFPS||0).toFixed(1)}<img src='/preview/${encodeURIComponent(id)}.jpg?t=${Date.now()}' onerror="this.alt='Kamera uzilgan';this.src='';"><small>${esc(x.error||'')}</small></div>`).join('')}catch(e){state.className='state bad';state.textContent='Server bilan aloqa yo‘q: '+e.message}}
+async function refresh(){try{const [h,c]=await Promise.all([fetch('/health'),fetch('/cameras')]);if(!h.ok||!c.ok)throw Error('HTTP '+h.status);const health=await h.json(), data=await c.json();state.className='state ok';state.textContent='Server ishlayapti · rejim '+health.mode+' · detector '+health.detector;cams.innerHTML=Object.entries(data).map(([id,x])=>`<div class='cam'><b>${esc(id)} · ${esc(x.sector)}</b><br><span class='${x.online?'ok':'bad'}'>${x.online?'Ulangan':'Kamera uzilgan'}</span> · FPS ${Number(x.captureFPS||0).toFixed(1)}<img src='/stream/${encodeURIComponent(id)}.mjpg' onerror="this.alt='Kamera uzilgan';this.src='';"><small>${esc(x.error||'')}</small></div>`).join('')}catch(e){state.className='state bad';state.textContent='Server bilan aloqa yo‘q: '+e.message}}
 function connect(){const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws.onmessage=e=>{const m=JSON.parse(e.data);log.textContent=(JSON.stringify(m)+"\\n"+log.textContent).slice(0,8000)};ws.onclose=()=>setTimeout(connect,2000)}
 refresh();setInterval(refresh,3000);connect();
 </script></html>""")
@@ -56,6 +57,30 @@ refresh();setInterval(refresh,3000);connect();
         if image is None:
             raise HTTPException(503, "camera frame unavailable")
         return Response(image, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+    @app.get("/stream/{camera_id}.mjpg")
+    async def stream(camera_id: str):
+        """Low-latency MJPEG stream for browsers and the operator console."""
+        if camera_id not in engine.cameras.health:
+            raise HTTPException(404, "unknown camera")
+
+        async def frames():
+            last_image: bytes | None = None
+            while True:
+                image = engine.cameras.latest_jpeg.get(camera_id)
+                if image is not None and image != last_image:
+                    last_image = image
+                    yield (b"--tankframe\r\nContent-Type: image/jpeg\r\n"
+                           + f"Content-Length: {len(image)}\r\n\r\n".encode()
+                           + image + b"\r\n")
+                preview_fps = float(engine.cameras.configs[camera_id].get("previewFps", 5))
+                await asyncio.sleep(1 / max(1.0, preview_fps))
+
+        return StreamingResponse(
+            frames(),
+            media_type="multipart/x-mixed-replace; boundary=tankframe",
+            headers={"Cache-Control": "no-store, no-cache", "Pragma": "no-cache"},
+        )
 
     @app.websocket("/ws")
     async def websocket_endpoint(socket: WebSocket):

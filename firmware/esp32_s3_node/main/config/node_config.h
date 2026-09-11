@@ -14,7 +14,12 @@ struct KeyConfig { const char* keyId; const char* sector; const char* rangeSenso
 // UNVERIFIED BOARD PROFILE: verify every GPIO against the exact ESP32-S3 board.
 // These pins drive only the input of a 3.3-V-compatible MOSFET/relay driver.
 // They must never be connected to a 24-V rail or to a lamp directly.
-inline constexpr bool kIndicatorActiveHigh = true;
+// Most 8-channel relay boards are active-low: build with
+// TANK_INDICATOR_ACTIVE_HIGH=0 after verifying the module with one test relay.
+#ifndef TANK_INDICATOR_ACTIVE_HIGH
+#define TANK_INDICATOR_ACTIVE_HIGH 1
+#endif
+inline constexpr bool kIndicatorActiveHigh = TANK_INDICATOR_ACTIVE_HIGH != 0;
 #if TANK_NODE_PROFILE == 1
 inline constexpr char kNodeId[] = "NODE-01";
 inline constexpr std::array<KeyConfig, kKeyCount> kKeys{{
