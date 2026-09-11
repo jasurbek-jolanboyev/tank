@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 import time
 
 from app.camera.base import CameraFrame
@@ -38,9 +39,16 @@ class OpenCvCamera:
         # ordinary UVC webcams; a camera may ignore this request if unsupported.
         if config["type"] in {"usb", "webcam"} and config.get("preferMjpeg", True):
             self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["width"])
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, config["height"])
-        self.capture.set(cv2.CAP_PROP_FPS, config["captureFps"])
+        # AVFoundation can reject a capture altogether when a mixed set of UVC
+        # webcams is forced to one native size/FPS that one of them does not
+        # advertise.  On macOS open each camera in its supported native mode;
+        # read() normalises the image and CameraManager applies the common FPS
+        # cap for the operator stream.
+        native_defaults = bool(config.get("macosNativeDefaults", False)) and sys.platform == "darwin"
+        if not native_defaults:
+            self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["width"])
+            self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, config["height"])
+            self.capture.set(cv2.CAP_PROP_FPS, config["captureFps"])
         if not self.capture.isOpened():
             self.capture.release()
             self.capture = None
@@ -54,6 +62,15 @@ class OpenCvCamera:
             await asyncio.to_thread(self.capture.release)
             self.capture = None
             raise ConnectionError(f"camera read failed: {self.config['id']}")
+        # macOS UVC drivers may ignore CAP_PROP_FRAME_WIDTH/HEIGHT.  Normalise
+        # every incoming image so all sector previews and inference receive the
+        # same resolution regardless of the physical webcam model.
+        target_width = int(self.config.get("width", 0))
+        target_height = int(self.config.get("height", 0))
+        if target_width > 0 and target_height > 0 and (
+            image.shape[1] != target_width or image.shape[0] != target_height
+        ):
+            image = self.cv2.resize(image, (target_width, target_height), interpolation=self.cv2.INTER_AREA)
         self.sequence += 1
         if self.config.get("flip"):
             image = self.cv2.flip(image, 1)

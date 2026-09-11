@@ -1,0 +1,40 @@
+# Direct macOS profile for the current USB topology.  AVFoundation device 1 is
+# the MacBook FaceTime camera and is deliberately omitted.  Devices 0, 2, 3,
+# and 4 are the four external UVC cameras observed on this Mac.
+version: 1
+mode: DEVELOPMENT
+rest: {host: "${TANK_SERVER_HOST}", port: 8080}
+websocket: {port: 8081}
+ai:
+  type: onnx
+  model: "${TANK_MODEL_PATH}"
+  format: yolo_v8
+  classes: [drone, bird, aircraft, unknown_air_object]
+  confidence: 0.70
+  iou: 0.45
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  nearEnterSamples: 3
+  nearExitSamples: 3
+  distanceFilterWindow: 5
+  distanceFilterAlpha: 0.35
+  distanceOutlierMeters: 8.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+range: {source: esp32}
+recording: {enabled: true, directory: recordings, maxBytes: 104857600, backupCount: 5}
+cameras:
+  - {id: CAM_FRONT_1, enabled: true, type: avfoundation, source: 0, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+  # macOS mapped source 2 to the built-in FaceTime view in this topology.
+  # Keep it disabled so an internal camera can never be mistaken for a sector.
+  - {id: CAM_FRONT_2, enabled: false, type: avfoundation, source: 2, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+  - {id: CAM_RIGHT_1, enabled: true, type: avfoundation, source: 3, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+  - {id: CAM_RIGHT_2, enabled: true, type: avfoundation, source: 4, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80}
+esp32Nodes: []

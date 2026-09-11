@@ -12,5 +12,6 @@ fi
 export TANK_SERVER_HOST="${TANK_SERVER_HOST:-0.0.0.0}"
 export TANK_MODEL_PATH="${TANK_MODEL_PATH:-${ROOT_DIR}/ml/exports/smoke-e1-f002-s320/best.onnx}"
 export PYTHONPATH="${ROOT_DIR}/jetson"
+TANK_CONFIG="${TANK_CONFIG:-${ROOT_DIR}/jetson/configs/macos-usb4.example.yaml}"
 
-exec "${VENV_PYTHON}" -m app.main --config "${ROOT_DIR}/jetson/configs/macos-usb4.example.yaml"
+exec "${VENV_PYTHON}" -m app.main --config "${TANK_CONFIG}"

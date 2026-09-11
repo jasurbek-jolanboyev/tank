@@ -59,7 +59,8 @@ class DetectionEngine:
         self.cameras.start()
         self.esp32.start()
         self.tasks = [asyncio.create_task(self._process(camera_id), name=f"ai:{camera_id}")
-                      for camera_id in self.cameras.queues]
+                      for camera_id in self.cameras.queues
+                      if not self.cameras.configs[camera_id].get("monitorOnly", False)]
         if self.config.mode == "SIMULATOR" or self.config.raw.get("range", {}).get("source") == "mock":
             self.tasks.append(asyncio.create_task(self._mock_range(), name="mock-range"))
         self.tasks.append(asyncio.create_task(self._health_loop(), name="health"))

@@ -10,6 +10,7 @@ from dataclasses import dataclass, replace
 from app.camera.base import ICameraSource, LatestFrameQueue
 from app.camera.simulated import SimulatedCamera
 from app.camera.opencv_source import OpenCvCamera
+from app.camera.ffmpeg_source import AvFoundationCamera
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ class CameraManager:
                 source = SimulatedCamera(camera_id, cfg["sector"], cfg.get("captureFps", 10))
             elif cfg["type"] in {"usb", "webcam", "video", "rtsp", "csi"}:
                 source = OpenCvCamera(cfg)
+            elif cfg["type"] == "avfoundation":
+                source = AvFoundationCamera(cfg)
             else:
                 raise ValueError(f"unsupported camera type: {cfg['type']}")
 
@@ -103,9 +106,15 @@ class CameraManager:
         source, queue, health = self.sources[camera_id], self.queues[camera_id], self.health[camera_id]
         window_started, window_frames = time.monotonic(), 0
         last_preview = 0.0
+        # Some UVC drivers ignore the requested CAP_PROP_FPS and produce 30
+        # FPS.  A software cap keeps every camera equally paced and prevents
+        # one camera from monopolising a shared USB hub.
+        capture_fps = float(self.configs[camera_id].get("captureFps", 0))
+        capture_interval = 1.0 / capture_fps if capture_fps > 0 else 0.0
 
         while True:
             try:
+                capture_started = time.monotonic()
                 frame = await asyncio.wait_for(source.read(), timeout=2.0)
                 if frame is None:
                     if health.online:
@@ -130,15 +139,23 @@ class CameraManager:
                     window_started, window_frames = time.monotonic(), 0
 
                 preview_fps = float(self.configs[camera_id].get("previewFps", 5))
+                jpeg_quality = int(self.configs[camera_id].get("jpegQuality", 80))
+                jpeg_quality = max(1, min(100, jpeg_quality))
                 now = time.monotonic()
-                if frame.image is not None and preview_fps > 0 and (now - last_preview) >= (1.0 / preview_fps):
+                if frame.image is not None and (
+                    preview_fps <= 0 or (now - last_preview) >= (1.0 / preview_fps)
+                ):
                     import cv2
                     ok, encoded = await asyncio.to_thread(
-                        cv2.imencode, ".jpg", frame.image, [cv2.IMWRITE_JPEG_QUALITY, 75]
+                        cv2.imencode, ".jpg", frame.image, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
                     )
                     if ok:
                         self.latest_jpeg[camera_id] = encoded.tobytes()
                         last_preview = now
+
+                remaining = capture_interval - (time.monotonic() - capture_started)
+                if remaining > 0:
+                    await asyncio.sleep(remaining)
 
             except asyncio.CancelledError:
                 raise

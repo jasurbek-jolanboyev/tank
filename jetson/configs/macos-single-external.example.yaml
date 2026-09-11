@@ -1,0 +1,36 @@
+# Safe direct-Mac test profile. It deliberately selects the named external UVC
+# camera, never the MacBook built-in FaceTime camera.
+version: 1
+mode: DEVELOPMENT
+rest: {host: "${TANK_SERVER_HOST}", port: 8080}
+websocket: {port: 8081}
+ai:
+  type: onnx
+  model: "${TANK_MODEL_PATH}"
+  format: yolo_v8
+  classes: [drone, bird, aircraft, unknown_air_object]
+  confidence: 0.70
+  iou: 0.45
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  nearEnterSamples: 3
+  nearExitSamples: 3
+  distanceFilterWindow: 5
+  distanceFilterAlpha: 0.35
+  distanceOutlierMeters: 8.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+range: {source: esp32}
+recording: {enabled: true, directory: recordings, maxBytes: 104857600, backupCount: 5}
+cameras:
+  # captureFps/previewFps: 0 preserves the external camera's native maximum
+  # (this camera advertises 640x480 at 30 FPS). AI remains capped separately.
+  - {id: CAM_FRONT_1, enabled: true, type: avfoundation, source: "Web Camera", nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_1, width: 640, height: 480, captureFps: 0, aiFps: 5, previewFps: 0, jpegQuality: 80}
+esp32Nodes: []

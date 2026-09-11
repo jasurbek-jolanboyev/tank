@@ -1,5 +1,6 @@
 # Direct macOS host profile. Cameras and ESP32 must be connected to the Mac,
-# not passed through to VMware. Use OpenCV camera indexes verified by the probe.
+# not passed through to VMware. On this Mac the built-in FaceTime camera is
+# index 0, so external USB cameras deliberately start at indexes 1–4.
 version: 1
 mode: DEVELOPMENT
 rest: {host: "${TANK_SERVER_HOST}", port: 8080}
@@ -30,9 +31,11 @@ policy:
 range: {source: esp32}
 recording: {enabled: true, directory: recordings, maxBytes: 104857600, backupCount: 5}
 cameras:
-  - {id: CAM_FRONT_1, enabled: true, type: webcam, source: 0, sector: FRONT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 8, preferMjpeg: true, rotation: 0, flip: false}
-  - {id: CAM_FRONT_2, enabled: true, type: webcam, source: 1, sector: FRONT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 8, preferMjpeg: true, rotation: 0, flip: false}
-  - {id: CAM_RIGHT_1, enabled: true, type: webcam, source: 2, sector: RIGHT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 8, preferMjpeg: true, rotation: 0, flip: false}
-  - {id: CAM_RIGHT_2, enabled: true, type: webcam, source: 3, sector: RIGHT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 8, preferMjpeg: true, rotation: 0, flip: false}
+  # The Mac built-in camera (index 0) is intentionally excluded: these four
+  # feeds are the physical sector cameras used for AI and indicator decisions.
+  - {id: CAM_FRONT_1, enabled: true, type: webcam, source: 1, sector: FRONT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80, preferMjpeg: true, macosNativeDefaults: true, rotation: 0, flip: false}
+  - {id: CAM_FRONT_2, enabled: true, type: webcam, source: 2, sector: FRONT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80, preferMjpeg: true, macosNativeDefaults: true, rotation: 0, flip: false}
+  - {id: CAM_RIGHT_1, enabled: true, type: webcam, source: 3, sector: RIGHT_1, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80, preferMjpeg: true, macosNativeDefaults: true, rotation: 0, flip: false}
+  - {id: CAM_RIGHT_2, enabled: true, type: webcam, source: 4, sector: RIGHT_2, width: 640, height: 480, captureFps: 15, aiFps: 5, previewFps: 10, jpegQuality: 80, preferMjpeg: true, macosNativeDefaults: true, rotation: 0, flip: false}
 esp32Nodes:
   - {nodeId: NODE-01, sectors: [FRONT_1, FRONT_2, RIGHT_1, RIGHT_2], transport: serial, endpoint: auto, baudRate: 115200}

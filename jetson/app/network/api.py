@@ -28,7 +28,7 @@ def create_api(engine: DetectionEngine) -> FastAPI:
 <script>
 const state=document.querySelector('#state'), cams=document.querySelector('#cams'), log=document.querySelector('#log');
 function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-async function refresh(){try{const [h,c]=await Promise.all([fetch('/health'),fetch('/cameras')]);if(!h.ok||!c.ok)throw Error('HTTP '+h.status);const health=await h.json(), data=await c.json(), ids=Object.keys(data).join(',');state.className='state ok';state.textContent='Server ishlayapti · rejim '+health.mode+' · detector '+health.detector;if(cams.dataset.ids!==ids){cams.dataset.ids=ids;cams.innerHTML=Object.entries(data).map(([id,x])=>`<div class='cam'><b>${esc(id)} · ${esc(x.sector)}</b><br><span class='status'></span> · FPS <span class='fps'></span><img src='/stream/${encodeURIComponent(id)}.mjpg' onerror="this.alt='Kamera uzilgan';this.src='';"><small></small></div>`).join('')}Object.entries(data).forEach(([id,x])=>{const card=[...cams.children].find(e=>e.firstChild.textContent.startsWith(id));if(card){const status=card.querySelector('.status');status.className='status '+(x.online?'ok':'bad');status.textContent=x.online?'Ulangan':'Kamera uzilgan';card.querySelector('.fps').textContent=Number(x.captureFPS||0).toFixed(1);card.querySelector('small').textContent=x.error||''}})}catch(e){state.className='state bad';state.textContent='Server bilan aloqa yo‘q: '+e.message}}
+async function refresh(){try{const [h,c]=await Promise.all([fetch('/health'),fetch('/cameras')]);if(!h.ok||!c.ok)throw Error('HTTP '+h.status);const health=await h.json(),data=await c.json(),visible=Object.entries(data).filter(([,x])=>x.online),ids=visible.map(([id])=>id).join(',');state.className='state ok';state.textContent='Server ishlayapti · rejim '+health.mode+' · detector '+(health.detector||health.ai||'noma’lum');if(cams.dataset.ids!==ids){cams.dataset.ids=ids;cams.innerHTML=visible.length?visible.map(([id,x])=>`<div class='cam'><b>${esc(id)} · ${esc(x.sector)}</b><br><span class='status'></span> · FPS <span class='fps'></span><img src='/stream/${encodeURIComponent(id)}.mjpg' onerror="this.alt='Kamera uzilgan';this.src='';"><small></small></div>`).join(''):`<div class='state bad'>Hozir ulangan tashqi kamera yo‘q. Kamera ulanib kadr bera boshlasa oyna avtomatik chiqadi.</div>`}visible.forEach(([id,x])=>{const card=[...cams.children].find(e=>e.firstChild.textContent.startsWith(id));if(card){const status=card.querySelector('.status');status.className='status ok';status.textContent='Ulangan';card.querySelector('.fps').textContent=Number(x.captureFPS||0).toFixed(1);card.querySelector('small').textContent=''}})}catch(e){state.className='state bad';state.textContent='Server bilan aloqa yo‘q: '+e.message}}
 function connect(){const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws.onmessage=e=>{const m=JSON.parse(e.data);log.textContent=(JSON.stringify(m)+"\\n"+log.textContent).slice(0,8000)};ws.onclose=()=>setTimeout(connect,2000)}
 refresh();setInterval(refresh,3000);connect();
 </script></html>""")
@@ -74,7 +74,9 @@ refresh();setInterval(refresh,3000);connect();
                            + f"Content-Length: {len(image)}\r\n\r\n".encode()
                            + image + b"\r\n")
                 preview_fps = float(engine.cameras.configs[camera_id].get("previewFps", 5))
-                await asyncio.sleep(1 / max(1.0, preview_fps))
+                # previewFps: 0 means uncapped capture; keep the browser stream
+                # responsive without busy-looping when that mode is selected.
+                await asyncio.sleep(1 / (preview_fps if preview_fps > 0 else 30.0))
 
         return StreamingResponse(
             frames(),
