@@ -67,10 +67,13 @@ class Esp32Manager:
             sorted(glob.glob("/dev/serial/by-id/*"))
             + sorted(glob.glob("/dev/ttyACM*"))
             + sorted(glob.glob("/dev/ttyUSB*"))
+            + sorted(glob.glob("/dev/cu.usbmodem*"))
+            + sorted(glob.glob("/dev/cu.usbserial*"))
         )
         if not candidates:
-            LOG.warning("No physical USB serial ESP32 device found on startup. Using fallback /dev/ttyACM0")
-            return "/dev/ttyACM0"
+            fallback = "/dev/cu.usbmodem0" if __import__("sys").platform == "darwin" else "/dev/ttyACM0"
+            LOG.warning("No physical USB serial ESP32 device found on startup. Using fallback %s", fallback)
+            return fallback
         LOG.info(f"Discovered ESP32 serial endpoint: {candidates[0]}")
         return candidates[0]
 

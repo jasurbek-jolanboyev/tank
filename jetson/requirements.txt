@@ -4,3 +4,7 @@ pydantic>=2.10,<3
 PyYAML>=6.0,<7
 pyserial>=3.5,<4
 websockets>=13,<18
+numpy>=1.26,<3
+opencv-python>=4.10,<5
+onnxruntime>=1.20,<2
+psutil>=6,<8
