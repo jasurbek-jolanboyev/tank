@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import glob
 import logging
+import os
 import time
 from dataclasses import dataclass, replace
 
@@ -68,21 +69,33 @@ class CameraManager:
 
     @staticmethod
     def _resolve_auto_sources(configs: list[dict]) -> list[dict]:
-        """Resolve Linux V4L2 auto sources once at startup."""
-        devices = sorted(glob.glob("/dev/v4l/by-id/*video-index0"))
-        if not devices:
-            devices = sorted(glob.glob("/dev/video*"))
+        """Resolve unique V4L2 capture nodes, preferring physical UVC cameras."""
+        stable = sorted(glob.glob("/dev/v4l/by-id/*video-index0"))
+        capture_nodes = []
+        for path in sorted(glob.glob("/sys/class/video4linux/video*/index")):
+            try:
+                if open(path, encoding="utf-8").read().strip() == "0":
+                    capture_nodes.append(f"/dev/{os.path.basename(os.path.dirname(path))}")
+            except OSError:
+                continue
+
+        # VMware's virtual camera should not hide physically passed-through hub
+        # cameras. Keep it as a last fallback only.
+        physical_stable = [item for item in stable if "VMware" not in item]
+        virtual_stable = [item for item in stable if "VMware" in item]
+        physical_nodes = [item for item in capture_nodes if "video0" != os.path.basename(item)]
+        devices = physical_stable + physical_nodes + virtual_stable + capture_nodes
         used: set[str] = set()
         resolved: list[dict] = []
         for config in configs:
             item = dict(config)
             source = str(item.get("source", ""))
             if item.get("type") in {"usb", "webcam"} and source.lower() in {"auto", "discover"}:
-                candidate = next((path for path in devices if path not in used), None)
+                candidate = next((path for path in devices if os.path.realpath(path) not in used), None)
                 if candidate is None:
                     raise RuntimeError(f"no unused V4L2 camera found for {item.get('id')}")
                 item["source"] = candidate
-                used.add(candidate)
+                used.add(os.path.realpath(candidate))
             resolved.append(item)
         return resolved
 

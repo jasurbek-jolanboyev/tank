@@ -33,6 +33,11 @@ class OpenCvCamera:
             if isinstance(source, str) and source.strip().isdigit():
                 source = int(source.strip())
         self.capture = cv2.VideoCapture(source, backend)
+        # Compressed MJPEG avoids saturating a shared USB hub/VMware USB
+        # passthrough with raw YUYV frames. It is the preferred live mode for
+        # ordinary UVC webcams; a camera may ignore this request if unsupported.
+        if config["type"] in {"usb", "webcam"} and config.get("preferMjpeg", True):
+            self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, config["width"])
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, config["height"])
         self.capture.set(cv2.CAP_PROP_FPS, config["captureFps"])
