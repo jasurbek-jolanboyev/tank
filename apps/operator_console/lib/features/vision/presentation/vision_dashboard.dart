@@ -20,7 +20,7 @@ class _VisionDashboardState extends State<VisionDashboard> {
   );
 
   ControlMode mode = ControlMode.auto;
-  int cameraCount = 1;
+  int cameraCount = 4;
   late final jetson.JetsonConnectionService connection;
   Timer? previewTimer;
   int previewTick = 0;
@@ -45,7 +45,7 @@ class _VisionDashboardState extends State<VisionDashboard> {
     connection = jetson.JetsonConnectionService()..addListener(_refresh);
     connection.connectToHost(defaultServerHost);
 
-    previewTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+    previewTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       if (mounted &&
           connection.state == jetson.JetsonConnectionState.connected) {
         setState(() => previewTick++);
@@ -163,243 +163,250 @@ class _VisionDashboardState extends State<VisionDashboard> {
           Expanded(
             child: Row(
               children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'CAMERAS',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    DropdownButton<int>(
-                      value: cameraCount,
-                      items: [1, 2, 4, 8, 9, 12]
-                          .map(
-                            (n) => DropdownMenuItem(
-                              value: n,
-                              child: Text('$n Kamera'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (n) {
-                        if (n != null) setState(() => cameraCount = n);
-                      },
-                    ),
-                  ],
-                ),
                 Expanded(
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: cameraCount == 1
-                          ? 1
-                          : cameraCount <= 4
-                          ? 2
-                          : cameraCount <= 9
-                          ? 3
-                          : 4,
-                      childAspectRatio: 16 / 9,
-                    ),
-                    itemCount: cameraCount,
-                    itemBuilder: (context, index) {
-                      final knownIds = connection.cameras.keys.toList()..sort();
-                      final cameraId = index < knownIds.length
-                          ? knownIds[index]
-                          : 'CAM_${index + 1}';
-                      final health = connection.cameras[cameraId];
-                      final detection = connection.detections[cameraId];
-
-                      return Card(
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: mode == ControlMode.manual
-                              ? () =>
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Kamera $cameraId: ROI Sozlash',
-                                        ),
-                                      ),
-                                    )
-                              : null,
-                          child: Stack(
-                            children: [
-                              if (health?.online ?? false)
-                                Positioned.fill(
-                                  child: Image.network(
-                                    connection
-                                        .previewUri(cameraId, previewTick)
-                                        .toString(),
-                                    fit: BoxFit.contain,
-                                    gaplessPlayback: true,
-                                    errorBuilder: (_, _, _) => const Center(
-                                      child: Text(
-                                        'KADR MAVJUD EMAS',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'CAMERAS',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const Spacer(),
+                          DropdownButton<int>(
+                            value: cameraCount,
+                            items: [1, 2, 4, 8, 9, 12]
+                                .map(
+                                  (n) => DropdownMenuItem(
+                                    value: n,
+                                    child: Text('$n Kamera'),
                                   ),
                                 )
-                              else
-                                const Center(
-                                  child: Text(
-                                    'OFFLINE',
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                ),
-                              Positioned(
-                                left: 8,
-                                top: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  color: Colors.black87,
-                                  child: Text(
-                                    cameraId,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (detection?.bbox != null)
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: _DetectionOverlayPainter(
-                                      detection!,
-                                    ),
-                                  ),
-                                ),
-                              Positioned(
-                                left: 8,
-                                bottom: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  color: Colors.black87,
-                                  child: Text(
-                                    health == null
-                                        ? 'NO HEALTH'
-                                        : '${health.captureFps.toStringAsFixed(1)} FPS · '
-                                              '${health.processingFps.toStringAsFixed(1)} AI · '
-                                              'Drop: ${health.droppedFrames}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                                .toList(),
+                            onChanged: (n) {
+                              if (n != null) setState(() => cameraCount = n);
+                            },
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const VerticalDivider(),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'SECTORS',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: sectors
-                      .map(
-                        (s) => Chip(
-                          backgroundColor: _sectorColor(s),
-                          label: Text(
-                            s,
-                            style: TextStyle(
-                              color: _sectorColor(s) == Colors.white
-                                  ? Colors.black
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const Divider(),
-                const Text(
-                  'LATEST DETECTION',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                ListTile(
-                  dense: true,
-                  title: Text(
-                    connection.latestDetection?.objectClass.name
-                            .toUpperCase() ??
-                        'NO OBJECT',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    connection.latestDetection == null
-                        ? 'AI Telemetriya mavjud emas'
-                        : 'Track #${connection.latestDetection!.trackId} · '
-                              '${(connection.latestDetection!.confidence * 100).toStringAsFixed(1)}% · '
-                              '${connection.latestDetection!.distanceMeters?.toStringAsFixed(1) ?? '—'} m · '
-                              'Sektor: ${connection.latestDetection!.sector}',
-                  ),
-                ),
-                const Divider(),
-                const Text(
-                  'NODE HEALTH',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                ListTile(
-                  dense: true,
-                  title: Text(
-                    connection.health?.status.toUpperCase() ?? 'OFFLINE',
-                  ),
-                  subtitle: Text(
-                    connection.health == null
-                        ? 'Kamera —  AI —  ESP32 —'
-                        : '${connection.health!.mode} · Kameralar: ${connection.health!.cameraCount} · ESP32: ${connection.health!.esp32Count}',
-                  ),
-                ),
-                const Divider(),
-                const Text(
-                  'EVENT HISTORY',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Expanded(
-                  child: connection.events.isEmpty
-                      ? const Center(child: Text('Hodisalar yo\'q'))
-                      : ListView.builder(
-                          itemCount: connection.events.length,
-                          itemBuilder: (_, index) {
-                            final event = connection.events[index];
-                            return ListTile(
-                              dense: true,
-                              title: Text(event.event),
-                              subtitle: Text(
-                                'Sektor: ${event.sector} · ID: #${event.trackId ?? '—'}',
+                        ],
+                      ),
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: cameraCount == 1
+                                    ? 1
+                                    : cameraCount <= 4
+                                    ? 2
+                                    : cameraCount <= 9
+                                    ? 3
+                                    : 4,
+                                childAspectRatio: 16 / 9,
+                              ),
+                          itemCount: connection.cameras.isEmpty
+                              ? cameraCount
+                              : connection.cameras.length,
+                          itemBuilder: (context, index) {
+                            final knownIds = connection.cameras.keys.toList()
+                              ..sort();
+                            final cameraId = index < knownIds.length
+                                ? knownIds[index]
+                                : 'CAM_${index + 1}';
+                            final health = connection.cameras[cameraId];
+                            final detection = connection.detections[cameraId];
+
+                            return Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: mode == ControlMode.manual
+                                    ? () => ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Kamera $cameraId: ROI Sozlash',
+                                              ),
+                                            ),
+                                          )
+                                    : null,
+                                child: Stack(
+                                  children: [
+                                    if (health?.online ?? false)
+                                      Positioned.fill(
+                                        child: Image.network(
+                                          connection
+                                              .previewUri(cameraId, previewTick)
+                                              .toString(),
+                                          fit: BoxFit.contain,
+                                          gaplessPlayback: true,
+                                          errorBuilder: (_, _, _) =>
+                                              const Center(
+                                                child: Text(
+                                                  'KADR MAVJUD EMAS',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                        ),
+                                      )
+                                    else
+                                      const Center(
+                                        child: Text(
+                                          'OFFLINE',
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                      ),
+                                    Positioned(
+                                      left: 8,
+                                      top: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        color: Colors.black87,
+                                        child: Text(
+                                          cameraId,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (detection?.bbox != null)
+                                      Positioned.fill(
+                                        child: CustomPaint(
+                                          painter: _DetectionOverlayPainter(
+                                            detection!,
+                                          ),
+                                        ),
+                                      ),
+                                    Positioned(
+                                      left: 8,
+                                      bottom: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        color: Colors.black87,
+                                        child: Text(
+                                          health == null
+                                              ? 'NO HEALTH'
+                                              : '${health.captureFps.toStringAsFixed(1)} FPS · '
+                                                    '${health.processingFps.toStringAsFixed(1)} AI · '
+                                                    'Drop: ${health.droppedFrames}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
                         ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
+                const VerticalDivider(),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'SECTORS',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: sectors
+                            .map(
+                              (s) => Chip(
+                                backgroundColor: _sectorColor(s),
+                                label: Text(
+                                  s,
+                                  style: TextStyle(
+                                    color: _sectorColor(s) == Colors.white
+                                        ? Colors.black
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const Divider(),
+                      const Text(
+                        'LATEST DETECTION',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ListTile(
+                        dense: true,
+                        title: Text(
+                          connection.latestDetection?.objectClass.name
+                                  .toUpperCase() ??
+                              'NO OBJECT',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          connection.latestDetection == null
+                              ? 'AI Telemetriya mavjud emas'
+                              : 'Track #${connection.latestDetection!.trackId} · '
+                                    '${(connection.latestDetection!.confidence * 100).toStringAsFixed(1)}% · '
+                                    '${connection.latestDetection!.distanceMeters?.toStringAsFixed(1) ?? '—'} m · '
+                                    'Sektor: ${connection.latestDetection!.sector}',
+                        ),
+                      ),
+                      const Divider(),
+                      const Text(
+                        'NODE HEALTH',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ListTile(
+                        dense: true,
+                        title: Text(
+                          connection.health?.status.toUpperCase() ?? 'OFFLINE',
+                        ),
+                        subtitle: Text(
+                          connection.health == null
+                              ? 'Kamera —  AI —  ESP32 —'
+                              : '${connection.health!.mode} · Kameralar: ${connection.health!.cameraCount} · ESP32: ${connection.health!.esp32Count}',
+                        ),
+                      ),
+                      const Divider(),
+                      const Text(
+                        'EVENT HISTORY',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Expanded(
+                        child: connection.events.isEmpty
+                            ? const Center(child: Text('Hodisalar yo\'q'))
+                            : ListView.builder(
+                                itemCount: connection.events.length,
+                                itemBuilder: (_, index) {
+                                  final event = connection.events[index];
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(event.event),
+                                    subtitle: Text(
+                                      'Sektor: ${event.sector} · ID: #${event.trackId ?? '—'}',
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
