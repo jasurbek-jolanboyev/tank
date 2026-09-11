@@ -135,6 +135,15 @@ class _VisionDashboardState extends State<VisionDashboard> {
           label: Text(connection.state.name.toUpperCase()),
           onPressed: _showConnectDialog,
         ),
+        IconButton(
+          tooltip: 'Ulangan kameralar',
+          icon: const Icon(Icons.video_camera_back_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ConnectedCamerasPage(connection: connection),
+            ),
+          ),
+        ),
         const SizedBox(width: 16),
       ],
     ),
@@ -475,4 +484,91 @@ class _DetectionOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DetectionOverlayPainter oldDelegate) =>
       oldDelegate.detection.timestamp != detection.timestamp;
+}
+
+/// Dedicated operator view: only cameras that the server reports as online.
+class ConnectedCamerasPage extends StatelessWidget {
+  const ConnectedCamerasPage({super.key, required this.connection});
+
+  final jetson.JetsonConnectionService connection;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('ULANGAN KAMERALAR')),
+    body: AnimatedBuilder(
+      animation: connection,
+      builder: (context, _) {
+        final connected =
+            connection.cameras.entries
+                .where((entry) => entry.value.online)
+                .toList()
+              ..sort((a, b) => a.key.compareTo(b.key));
+        if (connected.isEmpty) {
+          return const Center(child: Text('Serverda online kamera topilmadi'));
+        }
+        return GridView.builder(
+          padding: const EdgeInsets.all(12),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: connected.length == 1 ? 1 : 2,
+            childAspectRatio: 16 / 9,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemCount: connected.length,
+          itemBuilder: (context, index) {
+            final cameraId = connected[index].key;
+            final health = connected[index].value;
+            final detection = connection.detections[cameraId];
+            return Card(
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.network(
+                      connection
+                          .previewUri(
+                            cameraId,
+                            DateTime.now().millisecondsSinceEpoch,
+                          )
+                          .toString(),
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, _, _) =>
+                          const Center(child: Text('KADR MAVJUD EMAS')),
+                    ),
+                  ),
+                  if (detection?.bbox != null)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _DetectionOverlayPainter(detection!),
+                      ),
+                    ),
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: _CameraBadge(
+                      '$cameraId · ${health.sector} · '
+                      '${health.captureFps.toStringAsFixed(1)} FPS',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ),
+  );
+}
+
+class _CameraBadge extends StatelessWidget {
+  const _CameraBadge(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    color: Colors.black87,
+    child: Text(text, style: const TextStyle(color: Colors.white)),
+  );
 }
