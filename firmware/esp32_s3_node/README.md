@@ -33,6 +33,21 @@ TANK_NODE_PROFILE=1 TANK_INDICATOR_ACTIVE_HIGH=0 idf.py build flash monitor
 `TANK_INDICATOR_ACTIVE_HIGH=1` remains the safe default for active-high MOSFET
 drivers. Relay contacts, not an ESP32 pin, switch the 24-V lamp circuit.
 
+## Dual Type-C CH343 server link
+
+The detected `1a86:55d3 QinHeng USB Single Serial` interface is the board's
+USB-UART Type-C connector. Build for that connector (Ubuntu will expose it as
+`/dev/ttyACM0`) with:
+
+```bash
+TANK_NODE_PROFILE=1 TANK_USE_UART0_USB_BRIDGE=1 \
+TANK_INDICATOR_ACTIVE_HIGH=0 idf.py build flash monitor
+```
+
+This profile uses UART0 GPIO43/44 internally; no separate jumper wires are
+needed for the server link. `TANK_USE_UART0_USB_BRIDGE=0` retains the old
+external UART2 GPIO15/16 adapter mode.
+
 Erase/reconfigure the build directory when changing profiles so a binary is never
 flashed to the wrong node. The build log prints node/profile/key count at boot.
 The GPIO map is an **UNVERIFIED BOARD PROFILE** until the exact board is selected.

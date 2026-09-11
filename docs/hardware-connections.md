@@ -35,12 +35,12 @@ Use `/dev/serial/by-id/...` in production configuration when available. The user
 running the service needs access to the serial group (normally `dialout`). ESP32
 must force all indicator outputs OFF when valid central commands stop for 2 s.
 
-Current firmware uses ESP32 UART2 on placeholder RX GPIO16 / TX GPIO15. Wire
-adapter TX → ESP32 RX16, adapter RX → ESP32 TX15 and GND → GND. Select 3.3-V
-logic; an actual ±RS-232 adapter can damage the board. The board's normal USB
-connector may still be used for flashing/logging, but current application JSON
-transport does not use native USB CDC. These pins must be checked against the
-exact ESP32-S3 board before connection.
+For a dual-Type-C ESP32-S3 board that appears in Ubuntu as `1a86:55d3 QinHeng
+USB Single Serial` / `/dev/ttyACM0`, flash with `TANK_USE_UART0_USB_BRIDGE=1`.
+Its CH343 USB-UART connector is linked to UART0 GPIO43/44 internally; no extra
+serial wires are needed. For boards using a separate 3.3-V UART adapter, retain
+the UART2 mode: adapter TX → ESP32 RX16, adapter RX → ESP32 TX15 and GND → GND.
+Never use a ±RS-232 adapter directly with ESP32 pins.
 
 ## TF02-Pro power and I2C wiring
 

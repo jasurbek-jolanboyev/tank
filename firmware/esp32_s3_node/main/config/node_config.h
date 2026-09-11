@@ -42,8 +42,20 @@ inline constexpr std::array<KeyConfig, kKeyCount> kKeys{{
 inline constexpr i2c_port_t kRangeI2cPort=I2C_NUM_0;
 inline constexpr gpio_num_t kRangeSda=GPIO_NUM_12, kRangeScl=GPIO_NUM_13;
 inline constexpr uint32_t kRangeI2cHz=100000;
+
+// The dual-USB-C N8R8/N16R8 boards using a QinHeng CH343 USB-UART bridge
+// expose UART0 on GPIO43 (TX) and GPIO44 (RX). Set this to 1 when the server
+// uses that USB-UART Type-C connector; leave it 0 for a separate UART2 adapter.
+#ifndef TANK_USE_UART0_USB_BRIDGE
+#define TANK_USE_UART0_USB_BRIDGE 0
+#endif
+#if TANK_USE_UART0_USB_BRIDGE
+inline constexpr uart_port_t kUbuntuUart=UART_NUM_0;
+inline constexpr gpio_num_t kUbuntuRx=GPIO_NUM_44, kUbuntuTx=GPIO_NUM_43;
+#else
 inline constexpr uart_port_t kUbuntuUart=UART_NUM_2;
 inline constexpr gpio_num_t kUbuntuRx=GPIO_NUM_16, kUbuntuTx=GPIO_NUM_15;
+#endif
 inline constexpr int kUbuntuBaud=115200;
 inline constexpr uint32_t kUbuntuTimeoutMs=2000;
 inline constexpr char kApSsid[]="TANK-SECURE-NET";
