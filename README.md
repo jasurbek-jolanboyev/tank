@@ -654,6 +654,9 @@ audit/reference search
 | 8 KEYS config va unique routing | WORKING, UNIT TESTED |
 | USB/RTSP/video capture | IMPLEMENTED, HARDWARE TEST REQUIRED |
 | Per-camera reconnect/FPS/drop health | IMPLEMENTED |
+| Direct macOS external-camera runtime | IMPLEMENTED; 2026-09-12 bench: 4 external UVC devices enumerated, 2 live streams stable in low-load profile; remaining 2 require USB/hub/native-mode validation |
+| macOS low-load detection profile | WORKING for 2 external cameras: 320×240 capture 5 FPS, AI 3 FPS, preview 1 FPS; intended for indicator testing rather than smooth video |
+| MacBook internal camera | EXCLUDED from the current external-camera profile; current AVFoundation mapping is FaceTime=0, external UVC=1–4 and must be rechecked after USB changes |
 | 2-node ESP32 manager | IMPLEMENTED, HARDWARE TEST REQUIRED |
 | Serial/WebSocket ESP32 transports | IMPLEMENTED, HARDWARE TEST REQUIRED |
 | Real range → freshness fusion | IMPLEMENTED, HARDWARE TEST REQUIRED |
@@ -668,6 +671,7 @@ audit/reference search
 | Radar | NOT SELECTED / NOT IMPLEMENTED |
 | 8-camera real performance | NOT RUN — HARDWARE REQUIRED |
 | ESP-IDF target build/flash | NOT RUN — TOOLCHAIN/HARDWARE REQUIRED |
+| ESP32-S3 serial JSON + 8-relay bench test | NOT RUN — firmware flash, relay input-polarity audit and safe low-voltage test required |
 | Physical TF02/LED/HIL/E2E | NOT RUN — HARDWARE REQUIRED |
 
 Kod “hardware’ni ulash bilan kafolatli ishlaydi” deb qabul qilinmaydi. Unit testlar
