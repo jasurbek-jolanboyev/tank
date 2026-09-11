@@ -1,0 +1,37 @@
+# Low-load direct macOS profile: detection and sector indication take priority
+# over high-resolution live video. Device 0 (FaceTime) is intentionally absent.
+version: 1
+mode: DEVELOPMENT
+rest: {host: "${TANK_SERVER_HOST}", port: 8080}
+websocket: {port: 8081}
+ai:
+  type: onnx
+  model: "${TANK_MODEL_PATH}"
+  format: yolo_v8
+  classes: [drone, bird, aircraft, unknown_air_object]
+  confidence: 0.70
+  iou: 0.45
+policy:
+  minimumConfidence: 0.70
+  confirmationFrames: 3
+  confirmationWindowMs: 1200
+  minimumTrackAgeMs: 250
+  maximumGapMs: 450
+  trackTimeoutMs: 2000
+  nearEnterMeters: 20.0
+  nearExitMeters: 22.0
+  nearEnterSamples: 3
+  nearExitSamples: 3
+  distanceFilterWindow: 5
+  distanceFilterAlpha: 0.35
+  distanceOutlierMeters: 8.0
+  requireApproachingForRed: false
+  maximumRangeAgeMs: 500
+range: {source: esp32}
+recording: {enabled: false, directory: recordings, maxBytes: 104857600, backupCount: 5}
+cameras:
+  - {id: CAM_FRONT_1, enabled: true, type: avfoundation, source: 1, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_1, width: 320, height: 240, captureFps: 5, aiFps: 3, previewFps: 1, jpegQuality: 60}
+  - {id: CAM_FRONT_2, enabled: true, type: avfoundation, source: 2, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: FRONT_2, width: 320, height: 240, captureFps: 5, aiFps: 3, previewFps: 1, jpegQuality: 60}
+  - {id: CAM_RIGHT_1, enabled: true, type: avfoundation, source: 3, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_1, width: 320, height: 240, captureFps: 5, aiFps: 3, previewFps: 1, jpegQuality: 60}
+  - {id: CAM_RIGHT_2, enabled: true, type: avfoundation, source: 4, nativeWidth: 640, nativeHeight: 480, nativeFps: 30, sector: RIGHT_2, width: 320, height: 240, captureFps: 5, aiFps: 3, previewFps: 1, jpegQuality: 60}
+esp32Nodes: []
